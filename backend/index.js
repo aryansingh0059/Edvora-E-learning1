@@ -23,18 +23,18 @@ const frontendOrigin = process.env.FRONTEND_URL || "http://localhost:3000";
 // ---------------- Database ----------------
 connect();
 
-// ---------------- ✅ FIXED GLOBAL CORS ----------------
-// ⚠️ REMOVE ALL MANUAL res.header CORS CODE
+const clientUrls = process.env.CLIENT_URL ? process.env.CLIENT_URL.split(",") : [];
 const allowedOrigins = [
   frontendOrigin,
-  // "http://localhost:3000/",
-  "https://edvora-beryl.vercel.app", // deployed frontend (Vercel)
+  "http://localhost:3000",
+  "https://edvora-beryl.vercel.app",
+  ...clientUrls,
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
         callback(null, true);
       } else {
         console.log("❌ Blocked CORS origin:", origin);
