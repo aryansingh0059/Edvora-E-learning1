@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: ["main", "master", "develop"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend Lint and Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Lint frontend
+        run: npm run lint
+
+      - name: Build frontend
+        env:
+          REACT_APP_BASE_URL: http://localhost:4000/api/v1
+          REACT_APP_RAZORPAY_KEY: dummy_key_for_ci
+        run: npm run build
+
+  backend:
+    name: Backend Install Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Validate backend package metadata
+        working-directory: backend
+        run: npm pkg get name version type
+
+  containers:
+    name: Docker Build Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -f backend/Dockerfile -t study-notion-backend:ci .
+
+      - name: Build frontend image
+        run: |
+          docker build \
+            --build-arg REACT_APP_BASE_URL=http://localhost:4000/api/v1 \
+            --build-arg REACT_APP_RAZORPAY_KEY=dummy_key_for_ci \
+            -f Dockerfile \
+            -t study-notion-frontend:ci \
+            .
