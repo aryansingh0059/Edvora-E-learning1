@@ -28,6 +28,7 @@ const allowedOrigins = [
   frontendOrigin,
   "http://localhost:3000",
   "https://edvora-beryl.vercel.app",
+  "https://edvora-e-learning1.vercel.app",
   ...clientUrls,
 ];
 
